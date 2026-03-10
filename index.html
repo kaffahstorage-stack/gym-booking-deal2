@@ -454,6 +454,12 @@ renderZin();
 renderAdmin();
 
 }
+document.addEventListener("DOMContentLoaded", () => {
+
+loadBooking();
+loadZinFirebase();
+
+});
 
 function setActive(el,par){
 document.querySelectorAll(par+" .option").forEach(o=>o.classList.remove("active"));
