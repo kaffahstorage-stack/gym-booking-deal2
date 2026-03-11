@@ -251,7 +251,7 @@ font-weight:bold;
 #bookingWidget{
 position:fixed;
 left:20px;
-:20px;
+bottom:20px;
 width:230px;
 background:#0f172a;
 color:white;
@@ -317,7 +317,57 @@ transform:translateY(0);
 opacity:1;
 }
 }
+#bookingHeader{
+background:#1e293b;
+padding:10px;
+font-weight:bold;
+display:flex;
+justify-content:space-between;
+align-items:center;
+cursor:grab;
+user-select:none;
+}
 
+#bookingHeader:active{
+cursor:grabbing;
+}
+
+#minBtn{
+background:none;
+border:none;
+color:white;
+font-size:18px;
+cursor:pointer;
+}
+
+#bookingWidget.minimized #bookingContent{
+display:none;
+}
+
+#bookingWidget.minimized{
+width:60px;
+height:60px;
+border-radius:50%;
+padding:0;
+display:flex;
+align-items:center;
+justify-content:center;
+cursor:pointer;
+}
+
+#bookingWidget.minimized #bookingContent{
+display:none;
+}
+
+#bookingWidget.minimized #bookingHeader{
+background:none;
+font-size:22px;
+justify-content:center;
+}
+
+#bookingWidget.minimized #minBtn{
+display:none;
+}
 </style>
 </head>
 
@@ -699,32 +749,38 @@ startCountdown(data.tanggal,data.jam);
 
 }
 
+let countdownTimer=null;
+
 function startCountdown(tanggal,jam){
+
+if(countdownTimer){
+clearInterval(countdownTimer);
+}
 
 let data = JSON.parse(localStorage.getItem("activeBooking"));
 
 let target=new Date(tanggal+"T"+jam).getTime();
 
+let startTime=new Date().getTime();
+let total=target-startTime;
+
 let notified=false;
 
-let timer=setInterval(()=>{
+countdownTimer=setInterval(()=>{
 
 let now=new Date().getTime();
-
 let distance=target-now;
 
-// notifikasi 1 jam sebelum
 if(distance<=3600000 && !notified){
 
 kirimNotifikasi(data.zin,data.jam);
-
 notified=true;
 
 }
 
 if(distance<=0){
 
-clearInterval(timer);
+clearInterval(countdownTimer);
 
 document.getElementById("bookingCountdown").innerHTML="Kelas Dimulai";
 
@@ -738,6 +794,15 @@ let seconds=Math.floor((distance%(1000*60))/1000);
 
 document.getElementById("bookingCountdown").innerHTML=
 hours+"h "+minutes+"m "+seconds+"s";
+
+/* UPDATE PROGRESS BAR */
+
+let percent=100-(distance/total*100);
+document.getElementById("bookingBar").style.width=percent+"%";
+
+/* UPDATE BUBBLE RING */
+
+updateBubbleRing(percent);
 
 },1000);
 
@@ -882,7 +947,114 @@ console.error("Error:",e);
 }
 
 }
+/* DRAG BOOKING WIDGET */
 
+document.addEventListener("DOMContentLoaded",()=>{
+
+const widget = document.getElementById("bookingWidget");
+const header = document.getElementById("bookingHeader");
+const minBtn = document.getElementById("minBtn");
+
+let offsetX = 0;
+let offsetY = 0;
+let isDragging = false;
+
+function startDrag(x,y){
+isDragging = true;
+
+const rect = widget.getBoundingClientRect();
+
+offsetX = x - rect.left;
+offsetY = y - rect.top;
+}
+
+function moveDrag(x,y){
+if(!isDragging) return;
+
+let left = x - offsetX;
+let top = y - offsetY;
+
+widget.style.left = left + "px";
+widget.style.top = top + "px";
+widget.style.bottom = "auto";
+
+localStorage.setItem("widgetX",left);
+localStorage.setItem("widgetY",top);
+}
+
+function endDrag(){
+isDragging=false;
+}
+
+/* MOUSE DRAG */
+header.addEventListener("mousedown",e=>{
+startDrag(e.clientX,e.clientY);
+});
+
+document.addEventListener("mousemove",e=>{
+moveDrag(e.clientX,e.clientY);
+});
+
+document.addEventListener("mouseup",endDrag);
+
+/* TOUCH DRAG (HP) */
+
+header.addEventListener("touchstart",e=>{
+let t=e.touches[0];
+startDrag(t.clientX,t.clientY);
+});
+
+document.addEventListener("touchmove",e=>{
+let t=e.touches[0];
+moveDrag(t.clientX,t.clientY);
+});
+
+document.addEventListener("touchend",endDrag);
+
+/* RESTORE JIKA BUBBLE DIKLIK */
+
+header.addEventListener("click",function(){
+
+if(widget.classList.contains("minimized")){
+widget.classList.remove("minimized");
+localStorage.setItem("widgetMin","false");
+}
+
+});
+
+/* MINIMIZE BUTTON */
+
+minBtn.onclick=(e)=>{
+
+e.stopPropagation(); // supaya tidak trigger header click
+
+widget.classList.toggle("minimized");
+
+localStorage.setItem(
+"widgetMin",
+widget.classList.contains("minimized")
+);
+
+};
+
+/* LOAD POSISI */
+
+let x=localStorage.getItem("widgetX");
+let y=localStorage.getItem("widgetY");
+
+if(x && y){
+widget.style.left=x+"px";
+widget.style.top=y+"px";
+widget.style.bottom="auto";
+}
+
+/* LOAD MINIMIZE */
+
+if(localStorage.getItem("widgetMin")==="true"){
+widget.classList.add("minimized");
+}
+
+});
 
 </script>
 <!-- POPUP EDIT ZIN -->
@@ -929,7 +1101,8 @@ Batal
 <div id="bookingWidget">
 
 <div id="bookingHeader">
-🏋️ Booking Aktif
+<span id="bubbleIcon">🏋️</span>
+<button id="minBtn">minimize</button>
 </div>
 
 <div id="bookingContent">
