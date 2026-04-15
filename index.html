@@ -21,7 +21,7 @@ background:
 radial-gradient(circle at 20% 10%,#f5c16c33,transparent 40%),
 radial-gradient(circle at 80% 30%,#e67e2244,transparent 45%),
 linear-gradient(180deg,#000,#050505);
-animation:bgMove 30s linear infinite;
+animation:none;
 }
 @keyframes bgMove{
 0%{background-position:0 0,0 0,0 0}
@@ -68,7 +68,7 @@ border-radius:34px;
 padding:28px;
 border:1px solid rgba(255,255,255,.1);
 box-shadow:0 60px 160px rgba(0,0,0,.9);
-animation:float 6s ease-in-out infinite;
+animation:none;
 }
 @keyframes float{50%{transform:translateY(-6px)}}
 
@@ -631,7 +631,78 @@ showPopup("ZIN berhasil ditambahkan","success");
 reader.readAsDataURL(file);
 
 }
+async function editZinField(field){
 
+  if(currentEditIndex === null) return;
+
+  let z = zinData[currentEditIndex];
+  let id = z.id; // 🔥 ambil ID Firebase
+
+  let updateData = {};
+
+  if(field === "name"){
+    let newName = prompt("Nama ZIN:", z.name);
+    if(!newName) return;
+    updateData.name = newName;
+  }
+
+  else if(field === "harga"){
+    let newHarga = prompt("Harga ZIN:", z.harga);
+    if(!newHarga || isNaN(newHarga)) return;
+    updateData.harga = +newHarga;
+  }
+
+  else if(field === "img"){
+
+    let fileInput = document.getElementById("zinImgInput");
+    fileInput.click();
+
+    fileInput.onchange = async function(){
+
+      let file = fileInput.files[0];
+      if(!file) return;
+
+      let reader = new FileReader();
+
+      reader.onload = async function(e){
+
+        updateData.img = e.target.result;
+
+        try{
+          await updateDoc(doc(db,"zins",id), updateData);
+
+          loadZinFirebase(); // reload dari Firebase
+          showPopup("Foto ZIN berhasil diupdate","success");
+
+        }catch(err){
+          console.error(err);
+          showPopup("Gagal update foto","error");
+        }
+
+        closeEditZin();
+      }
+
+      reader.readAsDataURL(file);
+    }
+
+    return;
+  }
+
+  // 🔥 UPDATE KE FIREBASE (name & harga)
+  try{
+    await updateDoc(doc(db,"zins",id), updateData);
+
+    loadZinFirebase(); // reload data fresh
+
+    showPopup("ZIN berhasil diupdate","success");
+
+  }catch(err){
+    console.error(err);
+    showPopup("Gagal update ZIN","error");
+  }
+
+  closeEditZin();
+}
 function hapusZin(i){
 zinData.splice(i,1);
 localStorage.setItem("zin",JSON.stringify(zinData));
@@ -1133,7 +1204,8 @@ collection,
 addDoc,
 getDocs,
 deleteDoc,
-doc
+doc,
+updateDoc
 } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -1154,6 +1226,9 @@ window.addDoc = addDoc;
 window.collection = collection;
 window.getDocs = getDocs;
 window.doc = doc;
+window.updateDoc = updateDoc;
+// 🔥 TAMBAH INI DI SINI
+loadZinFirebase();
 
 </script>
 
