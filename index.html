@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IRON GYM Booking</title>
+<title>El-Extira GYM Booking</title>
 
 <style>
 :root{
@@ -368,6 +368,136 @@ justify-content:center;
 #bookingWidget.minimized #minBtn{
 display:none;
 }
+#watermark{
+position:fixed;
+bottom:10px;
+right:12px;
+font-size:12px;
+color:rgba(255,255,255,0.5);
+z-index:99999;
+pointer-events:none;
+font-weight:500;
+letter-spacing:0.5px;
+transition:0.3s;
+}
+
+#watermark:hover{
+color:rgba(255,255,255,0.9);
+transform:scale(1.05);
+}
+.filter-mini{
+display:flex;
+gap:8px;
+flex-wrap:wrap;
+margin-bottom:10px;
+}
+
+.filter-mini button{
+padding:8px 14px;
+border:none;
+border-radius:999px;
+font-size:12px;
+font-weight:600;
+background:#1f2937;
+color:white;
+cursor:pointer;
+transition:0.2s;
+}
+
+.filter-mini button:hover{
+background:#f5c16c;
+color:black;
+}
+.notif-mini{
+position:fixed;
+top:14px;
+left:14px; /* bisa ganti right kalau mau kanan */
+padding:8px 10px;
+border-radius:50%;
+border:none;
+font-size:14px;
+background:#22c55e;
+color:white;
+z-index:99999;
+cursor:pointer;
+box-shadow:0 0 10px rgba(0,0,0,0.5);
+transition:0.2s;
+}
+
+.notif-mini:hover{
+transform:scale(1.1);
+}
+#scrollTopBtn{
+position:fixed;
+bottom:30px;
+right:30px;
+padding:14px 16px;
+border:none;
+border-radius:50%;
+font-size:18px;
+font-weight:bold;
+background:linear-gradient(135deg,#f5c16c,#e67e22);
+color:black;
+cursor:pointer;
+display:none;
+box-shadow:0 10px 30px rgba(0,0,0,0.6);
+z-index:99999;
+transition:0.3s;
+}
+
+#scrollTopBtn:hover{
+transform:scale(1.15);
+}
+#incomePanel{
+width:250px;
+background:#0c0c0c;
+padding:20px;
+border-radius:20px;
+height:fit-content;
+position:sticky;
+top:20px;
+}
+
+.income-card{
+background:#111;
+padding:16px;
+border-radius:16px;
+margin-bottom:12px;
+text-align:center;
+font-size:14px;
+}
+
+.income-card strong{
+display:block;
+margin-top:6px;
+font-size:18px;
+color:#f5c16c;
+}
+.back-btn{
+  position:fixed;
+  bottom:20px;
+  left:0;
+  right:0;
+  margin:auto;
+  width:max-content;
+  padding:14px 28px;
+}
+#motivasiPopup .popup-box{
+animation: popIn .4s ease;
+}
+
+@keyframes popIn{
+from{
+transform:scale(0.7);
+opacity:0;
+}
+to{
+transform:scale(1);
+opacity:1;
+}
+}
+
+
 </style>
 </head>
 
@@ -375,14 +505,14 @@ display:none;
 
 <div id="loader"><div class="loader-ring"></div></div>
 <button class="refresh-btn" onclick="location.reload()">🔄 Refresh</button>
-
+<div id="watermark">Made by Wiracom Banjarbaru ✨</div>
 <div class="container">
 <div class="card" id="card">
 <div class="header" id="title">
 
-<img src="assets/img/logo.png" class="gym-logo">
+<img id="gymLogo" src="assets/img/logo.png" class="gym-logo" onclick="showMotivasi()">
 
-<h1>IRON GYM</h1>
+<h1>El-Extira GYM</h1>
 
 </div>
 
@@ -415,23 +545,74 @@ display:none;
 </div>
 
 <div class="admin" id="admin">
+<div style="display:flex;gap:20px;align-items:flex-start">
+
 <div class="admin-box">
 <h3>ADMIN PANEL</h3>
+<button id="scrollTopBtn">⬆</button>
 
-<input class="admin-search" id="searchBooking" placeholder="Cari booking...">
+
 <input id="zinNama" placeholder="Nama ZIN">
 <input id="zinHarga" type="number" placeholder="Harga">
 <input id="zinImg" type="file" accept="image/*">
 <button class="main-btn" onclick="tambahZin()">Tambah ZIN</button>
+<button onclick="toggleNotif()" id="notifBtn" class="notif-mini">
+🔔
+</button>
+
+<h4>Logo Gym</h4>
+
+<input type="file" id="logoInput" accept="image/*">
+<button class="main-btn" onclick="uploadLogo()">Upload Logo</button>
 
 <h4>ZIN</h4>
 <div id="listZin"></div>
 
 <h4>Booking</h4>
 <div id="listBooking"></div>
-
-<button class="main-btn" onclick="admin.style.display='none'">⬅ Kembali ke Halaman Utama</button>
+<div style="display:flex;gap:10px;margin-bottom:10px;">
+  <button onclick="setFilter('today')" class="main-btn">Hari Ini</button>
+  <button onclick="setFilter('week')" class="main-btn">7 Hari</button>
+  <button onclick="setFilter('all')" class="main-btn">Semua</button>
 </div>
+
+<div class="filter-mini">
+  <button onclick="setStatusFilter('all')">Semua</button>
+  <button onclick="setStatusFilter('aktif')">Aktif</button>
+  <button onclick="setStatusFilter('dibatalkan')">Dibatalkan</button>
+  <button onclick="setStatusFilter('selesai')">Selesai</button>
+</div>
+</div>
+
+<!-- PANEL TOTAL -->
+<div id="incomePanel">
+  <h3>💰 Total Pendapatan</h3>
+
+  <div class="income-card">
+    Hari Ini<br>
+    <strong id="totalToday">Rp 0</strong>
+  </div>
+
+  <div class="income-card">
+    7 Hari<br>
+    <strong id="totalWeek">Rp 0</strong>
+  </div>
+
+  <div class="income-card">
+    Bulan Ini<br>
+    <strong id="totalMonth">Rp 0</strong>
+  </div>
+
+  <div class="income-card">
+    Tahun Ini<br>
+    <strong id="totalYear">Rp 0</strong>
+  </div>
+</div>
+
+</div>
+<button class="main-btn back-btn" onclick="admin.style.display='none'">
+⬅ Kembali ke Halaman Utama
+</button>
 </div>
 
 <script>
@@ -462,7 +643,10 @@ let zinData = JSON.parse(localStorage.getItem("zin")) || [
   {name:"Aim", harga:200000, img:"assets/img/aim.jpg"}
 ];
 let bookings=JSON.parse(localStorage.getItem("book"))||[];
+let lastBookingCount = 0;
+let filterMode = "all";
 let pilihKelas="",pilihZin=null;
+let notifAktif = localStorage.getItem("notifAktif") !== "false";
 
 kelasData.forEach(k=>{
 let d=document.createElement("div");
@@ -496,7 +680,10 @@ querySnapshot.forEach((doc)=>{
 
 console.log("DATA ZIN:",doc.data());
 
-zinData.push(doc.data());
+zinData.push({
+  id: doc.id,
+  ...doc.data()
+});
 
 });
 
@@ -541,20 +728,24 @@ return;
 }
 
 let msg =
-`📌 BOOKING IRON GYM%0A
---------------------%0A
-Nama : ${nama.value}%0A
-WhatsApp : ${hp.value}%0A
-Kelas : ${pilihKelas}%0A
-ZIN : ${pilihZin.name}%0A
-Harga : Rp ${pilihZin.harga.toLocaleString()}%0A
-Tanggal : ${tanggal.value}%0A
-Jam : ${jam.value}%0A
---------------------%0A
-💳 QRIS:%0A
-${location.origin}/assets/img/QRIS.jpeg%0A
---------------------%0A
-📸 Bukti transfer menyusul`;
+`✨ *BOOKING EL-EXTIRA GYM* ✨%0A
+━━━━━━━━━━━━━━━━━━%0A
+👤 *Nama* : ${nama.value}%0A
+📱 *WhatsApp* : ${hp.value}%0A
+🏋️ *Kelas* : ${pilihKelas}%0A
+🧑‍🏫 *ZIN* : ${pilihZin.name}%0A
+📅 *Tanggal* : ${tanggal.value}%0A
+⏰ *Jam* : ${jam.value}%0A
+💰 *Total* : Rp ${pilihZin.harga.toLocaleString()}%0A
+━━━━━━━━━━━━━━━━━━%0A
+
+💳 *Metode Pembayaran* :%0A
+(Silakan transfer sesuai instruksi)%0A
+
+📸 *Catatan* :%0A
+Bukti transfer akan dikirim menyusul.%0A
+
+🙏 Terima kasih sudah booking di *El-Extira GYM*! 💪🔥`;
 
 window.open(`https://wa.me/${WA_ADMIN}?text=${msg}`);
 }
@@ -563,17 +754,28 @@ window.open(`https://wa.me/${WA_ADMIN}?text=${msg}`);
 
 /* ADMIN */
 let tap=0;
-title.onclick=()=>{
+title.onclick=async ()=>{
 tap++;
-if(tap>=5 && prompt("PIN Admin")==PIN){
+updateNotifButton();
+if(tap>=5 && prompt("Masukkan PIN Admin")==PIN){
+
 admin.style.display="block";
+
+// 🔥 WAJIB TAMBAH INI
+await loadBookingFirebase();
+
 renderAdmin();
+
+// 🔥 cek booking baru
+await cekBookingBaru();
+
 tap=0;
 }
 }
-searchBooking.oninput=()=>renderAdmin(searchBooking.value);
 
-function renderAdmin(q=""){
+
+function renderAdmin(){
+
 listZin.innerHTML = "";
 zinData.forEach((z,i) => listZin.innerHTML += `
   <div class="item">
@@ -585,15 +787,52 @@ zinData.forEach((z,i) => listZin.innerHTML += `
 `);
 
 listBooking.innerHTML="";
-bookings.filter(b=>
-`${b.nama} ${b.kelas} ${b.zin}`.toLowerCase().includes(q.toLowerCase())
-).forEach((b,i)=>listBooking.innerHTML+=`
-<div class="item">
-<b>${b.nama}</b><br>${b.kelas} • ${b.zin}<br>
-${b.tanggal} ${b.jam}<br>
-Rp ${b.harga.toLocaleString()}
-<button onclick="hapusBooking(${i})">Hapus</button>
-</div>`);
+
+let now = new Date();
+
+let filtered = bookings.filter(b => {
+
+let cocokSearch = true;
+
+// 🔥 filter status
+let cocokStatus = (statusFilter === "all" || b.status === statusFilter);
+
+// default kalau belum ada status (data lama)
+if(!b.status) b.status = "aktif";
+
+let tgl = new Date(b.createdAt || b.tanggal);
+
+if(filterMode === "today"){
+return cocokSearch && cocokStatus && tgl.toDateString() === now.toDateString();
+}
+
+if(filterMode === "week"){
+let diff = (now - tgl) / (1000*60*60*24);
+return cocokSearch && cocokStatus && diff <= 7;
+}
+
+return cocokSearch && cocokStatus;
+
+});
+
+// 🔥 INI YANG BENAR
+filtered.forEach((b,i)=>{
+  let jamBooking = b.createdAt 
+    ? new Date(b.createdAt).toLocaleTimeString()
+    : "Tidak diketahui";
+
+  listBooking.innerHTML += `
+  <div class="item">
+    <b>${b.nama}</b><br>
+    📱 ${b.hp || '-'}<br>
+    Kelas ${b.kelas} • Zin ${b.zin}<br>
+    Tanggal ${b.tanggal} Di Jam ${b.jam}<br>
+    🕒 Booking dibuat: ${jamBooking}<br>
+    Rp ${(b.harga || 0).toLocaleString()}
+    <button onclick="hapusBooking('${b.id}')">Hapus</button>
+  </div>`;
+});
+hitungPendapatan();
 }
 async function tambahZin(){
 
@@ -703,15 +942,52 @@ async function editZinField(field){
 
   closeEditZin();
 }
-function hapusZin(i){
-zinData.splice(i,1);
-localStorage.setItem("zin",JSON.stringify(zinData));
-renderZin();renderAdmin();
+async function hapusZin(i){
+
+if(!confirm("Anda Yakin Ingin Hapus ZIN ini?")) return;
+
+let z = zinData[i];
+
+try{
+
+  await deleteDoc(doc(db,"zins", z.id));
+
+  showPopup("ZIN berhasil dihapus","success");
+
+  loadZinFirebase();
+
+}catch(err){
+
+  console.error(err);
+  showPopup("Gagal hapus ZIN","error");
+
 }
-function hapusBooking(i){
-bookings.splice(i,1);
-localStorage.setItem("book",JSON.stringify(bookings));
-renderAdmin();
+
+}
+async function hapusBooking(id){
+
+console.log("ID MAU DIHAPUS:", id); // 🔍 WAJIB CEK
+
+if(!confirm("Anda yakin ingin hanpus booking ini?")) return;
+
+try{
+
+  await deleteDoc(doc(db,"bookings", id));
+
+  bookings = bookings.filter(b => b.id !== id);
+
+  localStorage.setItem("book", JSON.stringify(bookings));
+
+  renderAdmin();
+
+  showPopup("Booking berhasil dihapus","success");
+
+}catch(err){
+
+  console.error("ERROR HAPUS:", err);
+  showPopup("Gagal hapus booking","error");
+
+}
 }
 function showPopup(text,type="success"){
 
@@ -749,13 +1025,16 @@ kelas:pilihKelas,
 zin:pilihZin.name,
 harga:pilihZin.harga,
 tanggal:tanggal.value,
-jam:jam.value
+jam:jam.value,
+createdAt: new Date().toISOString(),
+status: "aktif" // 🔥 tambahin ini
 };
 
 // simpan ke Firebase
-await simpanBookingFirebase(dataBooking);
+let docRef = await addDoc(collection(db,"bookings"), dataBooking);
 
-// simpan booking lokal
+dataBooking.id = docRef.id;
+
 bookings.push(dataBooking);
 localStorage.setItem("book",JSON.stringify(bookings));
 
@@ -765,7 +1044,7 @@ localStorage.setItem("activeBooking", JSON.stringify(dataBooking));
 // jalankan widget countdown
 loadBooking();
 
-showPopup("Silakan scan QRIS untuk pembayaran","success");
+showPopup("Silakan scan QRIS untuk pembayaran Dan kirim bukti pembayarannya ke Admin","success");
 
 }
 async function bayarDANA(){
@@ -779,10 +1058,14 @@ kelas:pilihKelas,
 zin:pilihZin.name,
 harga:pilihZin.harga,
 tanggal:tanggal.value,
-jam:jam.value
+jam:jam.value,
+createdAt: new Date().toISOString(),
+status: "aktif" // 🔥 tambahin ini
 };
 
-await simpanBookingFirebase(dataBooking);
+let docRef = await addDoc(collection(db,"bookings"), dataBooking);
+
+dataBooking.id = docRef.id;
 
 bookings.push(dataBooking);
 localStorage.setItem("book",JSON.stringify(bookings));
@@ -793,9 +1076,9 @@ localStorage.setItem("activeBooking", JSON.stringify(dataBooking));
 // jalankan countdown
 loadBooking();
 
-navigator.clipboard.writeText("085157539577");
+navigator.clipboard.writeText("082337354131");
 
-showPopup("Transfer ke DANA:\n085157539577\nNomor disalin 👍","success");
+showPopup("Transfer ke DANA:\n082337354131\nNomor disalin 👍","success");
 
 }
 function loadBooking(){
@@ -820,9 +1103,11 @@ startCountdown(data.tanggal,data.jam);
 
 }
 
-let countdownTimer=null;
 
-function startCountdown(tanggal,jam){
+
+let countdownTimer = null;
+
+function startCountdown(tanggal, jam){
 
 if(countdownTimer){
 clearInterval(countdownTimer);
@@ -830,68 +1115,94 @@ clearInterval(countdownTimer);
 
 let data = JSON.parse(localStorage.getItem("activeBooking"));
 
-let target=new Date(tanggal+"T"+jam).getTime();
+// format aman
+let target = new Date(`${tanggal}T${jam}:00`).getTime();
 
-let startTime=new Date().getTime();
-let total=target-startTime;
+let createdAt = new Date(data.createdAt).getTime();
+let total = target - createdAt;
 
-let notified=false;
+let notified = false;
+let lastDistance = total;
 
-countdownTimer=setInterval(()=>{
+countdownTimer = setInterval(()=>{
 
-let now=new Date().getTime();
-let distance=target-now;
+let now = new Date().getTime();
+let distance = target - now;
 
-if(distance<=3600000 && !notified){
-
-kirimNotifikasi(data.zin,data.jam);
-notified=true;
-
+// 🔔 notif pas lewat 1 jam
+if(lastDistance > 3600000 && distance <= 3600000 && !notified){
+kirimNotifikasi(data.zin, data.jam);
+notified = true;
 }
 
-if(distance<=0){
+lastDistance = distance;
 
+// ⛔ waktu habis
+if(distance <= 0){
 clearInterval(countdownTimer);
 
-document.getElementById("bookingCountdown").innerHTML="Kelas Dimulai";
+// 🔔 NOTIF KELAS DIMULAI
+notifKelasDimulai(data.zin, data.jam);
 
-return;
-
+// update status ke firebase
+if(data?.id){
+updateDoc(doc(db,"bookings", data.id),{
+status:"selesai"
+});
 }
 
-let hours=Math.floor(distance/(1000*60*60));
-let minutes=Math.floor((distance%(1000*60*60))/(1000*60));
-let seconds=Math.floor((distance%(1000*60))/1000);
+// hapus booking aktif
+localStorage.removeItem("activeBooking");
 
-document.getElementById("bookingCountdown").innerHTML=
-hours+"h "+minutes+"m "+seconds+"s";
+// sembunyikan widget
+document.getElementById("bookingWidget").style.display = "none";
 
-/* UPDATE PROGRESS BAR */
+return;
+}
 
-let percent=100-(distance/total*100);
-document.getElementById("bookingBar").style.width=percent+"%";
+// ⏱️ format waktu
+let hours = Math.floor(distance/(1000*60*60));
+let minutes = Math.floor((distance%(1000*60*60))/(1000*60));
+let seconds = Math.floor((distance%(1000*60))/1000);
 
-/* UPDATE BUBBLE RING */
+document.getElementById("bookingCountdown").innerHTML =
+hours + "h " + minutes + "m " + seconds + "s";
 
-updateBubbleRing(percent);
+// 📊 progress bar
+let percent = 100 - (distance / total * 100);
+document.getElementById("bookingBar").style.width = percent + "%";
 
 },1000);
 
 }
-function batalkanBooking(){
+async function batalkanBooking(){
 
 if(!confirm("Batalkan booking?")) return;
+
+let data = JSON.parse(localStorage.getItem("activeBooking"));
+
+if(!data) return;
+
+try{
+
+await updateDoc(doc(db,"bookings", data.id),{
+status:"dibatalkan"
+});
 
 localStorage.removeItem("activeBooking");
 
 document.getElementById("bookingWidget").style.display="none";
 
-showPopup("Booking berhasil dibatalkan","success");
+showPopup("Booking dibatalkan","success");
 
+loadBookingFirebase();
+
+}catch(err){
+console.error(err);
+showPopup("Gagal membatalkan booking","error");
 }
 
-/* LOAD BOOKING SAAT WEBSITE DIBUKA */
-window.addEventListener("load", loadBooking);
+}
 function closePayment(){
 document.getElementById("paymentPopup").style.display="none";
 }
@@ -902,16 +1213,16 @@ Notification.requestPermission();
 }
 function kirimNotifikasi(zin,jam){
 
-if(Notification.permission==="granted"){
+// 🔕 kalau notif dimatikan → stop
+if(!notifAktif) return;
 
+if(Notification.permission==="granted"){
 new Notification("⏰ Kelas Segera Dimulai!",{
 body:"Kelas dengan Zin "+zin+" dimulai jam "+jam+" (1 jam lagi)"
 });
-
 }
 
 playAlarm();
-
 }
 function playAlarm(){
 
@@ -924,34 +1235,6 @@ navigator.vibrate([300,200,300,200,500]);
 }
 
 }
-function editZin(i){
-  let z = zinData[i];
-  let newName = prompt("Nama ZIN:", z.name);
-  if(!newName) return;
-
-  let newHarga = prompt("Harga ZIN:", z.harga);
-  if(!newHarga || isNaN(newHarga)) return;
-
-  // pilih foto baru opsional
-  let newFile = document.getElementById("zinImg").files[0];
-  if(newFile){
-    let reader = new FileReader();
-    reader.onload = function(e){
-      zinData[i] = { name: newName, harga: +newHarga, img: e.target.result };
-      localStorage.setItem("zin", JSON.stringify(zinData));
-      renderZin();
-      renderAdmin();
-      document.getElementById("zinImg").value = "";
-    }
-    reader.readAsDataURL(newFile);
-  } else {
-    zinData[i] = { name: newName, harga: +newHarga, img: z.img };
-    localStorage.setItem("zin", JSON.stringify(zinData));
-    renderZin();
-    renderAdmin();
-  }
-}
-let currentEditIndex = null;
 
 function openEditZin(i){
   currentEditIndex = i;
@@ -964,50 +1247,15 @@ function closeEditZin(){
   document.getElementById("zinImgInput").value = "";
 }
 
-function editZinField(field){
-  if(currentEditIndex === null) return;
-  let z = zinData[currentEditIndex];
 
-  if(field === "name"){
-    let newName = prompt("Nama ZIN:", z.name);
-    if(!newName) return;
-    z.name = newName;
-  } else if(field === "harga"){
-    let newHarga = prompt("Harga ZIN:", z.harga);
-    if(!newHarga || isNaN(newHarga)) return;
-    z.harga = +newHarga;
-  } else if(field === "img"){
-    // trigger file input
-    let fileInput = document.getElementById("zinImgInput");
-    fileInput.click();
-    fileInput.onchange = function(){
-      let file = fileInput.files[0];
-      if(!file) return;
-      let reader = new FileReader();
-      reader.onload = function(e){
-        z.img = e.target.result;
-        localStorage.setItem("zin", JSON.stringify(zinData));
-        renderZin();
-        renderAdmin();
-        closeEditZin();
-      }
-      reader.readAsDataURL(file);
-    }
-    return; // stop here, wait file input
-  }
-
-  // update data & UI
-  zinData[currentEditIndex] = z;
-  localStorage.setItem("zin", JSON.stringify(zinData));
-  renderZin();
-  renderAdmin();
-  closeEditZin();
-}
 async function simpanBookingFirebase(data){
 
 try{
 
-await addDoc(collection(db,"bookings"),data);
+let docRef = await addDoc(collection(db,"bookings"),data);
+
+// 🔥 tambahin ID ke data
+data.id = docRef.id;
 
 console.log("Booking masuk Firebase");
 
@@ -1126,8 +1374,280 @@ widget.classList.add("minimized");
 }
 
 });
+async function cekBookingBaru(){
+
+// 🔕 kalau notif dimatikan → stop total
+if(!notifAktif) return;
+
+const querySnapshot = await getDocs(collection(db,"bookings"));
+let jumlahSekarang = querySnapshot.size;
+
+if(jumlahSekarang > lastBookingCount){
+
+let selisih = jumlahSekarang - lastBookingCount;
+
+showPopup("🔥 Ada " + selisih + " booking baru!", "success");
+
+playAlarm();
+}
+
+lastBookingCount = jumlahSekarang;
+localStorage.setItem("lastBookingCount", jumlahSekarang);
+
+}
+function setFilter(mode){
+  filterMode = mode;
+  renderAdmin();
+}
+async function loadBookingFirebase(){
+
+const querySnapshot = await getDocs(collection(db,"bookings"));
+
+bookings = [];
+
+querySnapshot.forEach((docSnap)=>{
+bookings.push({
+  id: docSnap.id,
+  ...docSnap.data()
+});
+});
+renderAdmin();
+
+}
+document.addEventListener("keydown", function(e){
+
+// Blok F12
+if(e.key === "F12"){
+e.preventDefault();
+}
+
+// Blok Ctrl+Shift+I / J / C
+if(e.ctrlKey && e.shiftKey && ["i","j","c"].includes(e.key.toLowerCase())){
+e.preventDefault();
+}
+
+// Blok Ctrl+U (view source)
+if(e.ctrlKey && e.key.toLowerCase() === "u"){
+e.preventDefault();
+}
+
+// Blok Ctrl+S (save page)
+if(e.ctrlKey && e.key.toLowerCase() === "s"){
+e.preventDefault();
+}
+
+});
+document.addEventListener("contextmenu", e => e.preventDefault());
+setInterval(() => {
+if(window.outerWidth - window.innerWidth > 160){
+document.body.innerHTML = "<h1 style='color:white;text-align:center;margin-top:20%'>⚠️ Jangan Ngintip Kode 😁</h1>";
+}
+}, 1000);
+console.log("%cSTOP!", "color:red;font-size:40px;font-weight:bold;");
+console.log("%cJangan copy kode ya 😁", "color:yellow;font-size:16px;");
+async function loadLogo(){
+
+try{
+
+const docSnap = await getDoc(doc(db,"settings","app"));
+
+if(docSnap.exists()){
+let data = docSnap.data();
+
+if(data.logo){
+document.getElementById("gymLogo").src = data.logo;
+}
+}
+
+}catch(e){
+console.error("Gagal load logo:", e);
+}
+
+}
+document.addEventListener("DOMContentLoaded", () => {
+loadLogo();
+});
+async function uploadLogo(){
+
+let file = document.getElementById("logoInput").files[0];
+
+if(!file){
+alert("Pilih gambar dulu!");
+return;
+}
+
+let reader = new FileReader();
+
+reader.onload = async function(e){
+
+let base64 = e.target.result;
+
+try{
+
+await setDoc(doc(db,"settings","app"),{
+logo: base64
+},{ merge:true });
+
+showPopup("Logo berhasil diupdate!","success");
+
+loadLogo();
+
+}catch(err){
+console.error(err);
+showPopup("Gagal upload logo","error");
+}
+
+}
+
+reader.readAsDataURL(file);
+
+}
+let statusFilter = "all";
+function setStatusFilter(mode){
+statusFilter = mode;
+renderAdmin();
+}
+function toggleNotif(){
+
+notifAktif = !notifAktif;
+
+localStorage.setItem("notifAktif", notifAktif);
+
+updateNotifButton();
+
+}
+function updateNotifButton(){
+
+let btn = document.getElementById("notifBtn");
+
+if(notifAktif){
+btn.innerText = "🔔 Notifikasi ON";
+btn.style.background = "#22c55e";
+}else{
+btn.innerText = "🔕 Notifikasi OFF";
+btn.style.background = "#64748b";
+}
+
+}
+
+function notifKelasDimulai(zin, jam){
+
+if(notifAktif === false) return; // 🔕 kalau notif OFF, gak bunyi
+
+if(Notification.permission === "granted"){
+new Notification("🏋️ Kelas Dimulai!",{
+body: "Kelas dengan Zin " + zin + " sudah dimulai (" + jam + ")"
+});
+}
+
+// bunyi + getar
+playAlarm();
+
+}
+document.addEventListener("DOMContentLoaded", ()=>{
+
+const adminBox = document.querySelector(".admin-box");
+const btn = document.getElementById("scrollTopBtn");
+
+adminBox.addEventListener("scroll", ()=>{
+
+if(adminBox.scrollTop > 200){
+btn.style.display = "block";
+}else{
+btn.style.display = "none";
+}
+
+});
+
+btn.onclick = ()=>{
+adminBox.scrollTo({
+top:0,
+behavior:"smooth"
+});
+};
+
+});
+function hitungPendapatan(){
+
+let now = new Date();
+
+let todayTotal = 0;
+let weekTotal = 0;
+let monthTotal = 0;
+let yearTotal = 0;
+
+bookings.forEach(b => {
+
+let harga = b.harga || 0;
+let tgl = new Date(b.createdAt || b.tanggal);
+
+// skip kalau dibatalkan
+if(b.status !== "selesai") return;
+
+// HARI INI
+if(tgl.toDateString() === now.toDateString()){
+  todayTotal += harga;
+}
+
+// 7 HARI
+let diff = (now - tgl) / (1000*60*60*24);
+if(diff <= 7){
+  weekTotal += harga;
+}
+
+// BULAN
+if(tgl.getMonth() === now.getMonth() && tgl.getFullYear() === now.getFullYear()){
+  monthTotal += harga;
+}
+
+// TAHUN
+if(tgl.getFullYear() === now.getFullYear()){
+  yearTotal += harga;
+}
+
+});
+
+// render ke UI
+document.getElementById("totalToday").innerText = "Rp " + todayTotal.toLocaleString();
+document.getElementById("totalWeek").innerText = "Rp " + weekTotal.toLocaleString();
+document.getElementById("totalMonth").innerText = "Rp " + monthTotal.toLocaleString();
+document.getElementById("totalYear").innerText = "Rp " + yearTotal.toLocaleString();
+
+}
+const motivasiList = [
+"🔥 Tidak ada hasil tanpa usaha!",
+"💪 Hari ini latihan, besok lebih kuat!",
+"🚀 Progress kecil hasil luar biasa!",
+"🏋️ Jangan berhenti, tetap berjuang!",
+"🔥 Pain today, strength tomorrow!",
+"😎 Kamu lebih kuat dari yang kamu kira!",
+"⚡ Fokus, konsisten, hasil datang!",
+"💯 Gak harus sempurna, yang penting berusaha!"
+];
+function showMotivasi(){
+
+let random = motivasiList[Math.floor(Math.random() * motivasiList.length)];
+
+let pop = document.getElementById("motivasiPopup");
+let text = document.getElementById("motivasiText");
+
+text.innerText = random;
+pop.style.display = "flex";
+
+}
+
+
 
 </script>
+<div class="popup" id="motivasiPopup">
+  <div class="popup-box success" style="text-align:center">
+    <h3>🔥 Motivasi Hari Ini</h3>
+    <p id="motivasiText" style="font-size:18px;margin:16px 0"></p>
+    <button class="main-btn" onclick="document.getElementById('motivasiPopup').style.display='none'">
+      Siyap😉
+    </button>
+  </div>
+</div>
 <!-- POPUP EDIT ZIN -->
 <div class="popup" id="editZinPopup">
   <div class="popup-box">
@@ -1207,6 +1727,7 @@ deleteDoc,
 doc,
 updateDoc
 } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+import { getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
 const firebaseConfig = {
 apiKey: "AIzaSyAr8X...",
@@ -1219,6 +1740,8 @@ measurementId: "G-96JB0F6N0V"
 };
 
 const app = initializeApp(firebaseConfig);
+
+
 const db = getFirestore(app);
 
 window.db = db;
@@ -1227,8 +1750,14 @@ window.collection = collection;
 window.getDocs = getDocs;
 window.doc = doc;
 window.updateDoc = updateDoc;
-// 🔥 TAMBAH INI DI SINI
+window.getDoc = getDoc;
+window.setDoc = setDoc;
+// 🔥 TAMBAH INI
+window.deleteDoc = deleteDoc;
+
+// 🔥 PINDAH SEMUA LOAD KE SINI
 loadZinFirebase();
+loadBookingFirebase();
 
 </script>
 
